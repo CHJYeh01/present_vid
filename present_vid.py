@@ -6,6 +6,8 @@ This is a temporary script file.
 """
 import cv2
 import numpy as np
+import imageio
+import os
 
 def set_default_params():
     params = dict()
@@ -21,6 +23,48 @@ def set_default_params():
     params['timestamp_font'] = 0.5
     
     return params
+
+def quick_gif(params):
+    """This fcn takes a stack of images and converts it into a gif"""
+    filenames = params['filenames']
+    folder = params['folder']
+    output_gif = params['output_gif']
+    resize = params['resize']#resize factor
+    fps = params['fps']
+    images = []
+    for filename in filenames:
+        print(filename)
+        img = imageio.imread(folder + filename)
+        w = int(np.shape(img)[1] * resize)
+        h = int(np.shape(img)[0] * resize)
+        img = cv2.resize(img, (w, h))
+        images.append(img)
+    imageio.mimsave(output_gif, images, fps=fps)
+    
+def vid2im(params):
+    """convert video to stack of images defined by an interval"""
+    vid = params['vid']
+    out_folder = params['out_folder']
+    interval = params['interval']
+    counter = 0
+    cap = cv2.VideoCapture(vid)
+    while cap.isopened():
+        ret, frame = cap.read()
+        if np.mod(counter, interval)==0:
+            print('counter {}'.format(counter))
+            cv2.imwrite(out_folder + str(counter).zfill(6) + '.tif', frame)
+        counter = counter + 1
+    cap.release()
+    
+def filter_filenames(folder, ext='.tif'):
+    """This fcn filter through a list of filenames based on the specified extension. The default extension is .tif """
+    filtered = []
+    for filename in os.listdir(folder):
+        if filename.endswith(ext):#only find filenames based w/ extension of ext
+            filtered.append(filename)
+    filtered.sort()
+    print("number of files detected: {}".format(len(filtered)))
+    return filtered
 
 def convert_vid(params):
     cap = cv2.VideoCapture(params['vid_in'])
